@@ -23,30 +23,38 @@ def mailgainer():
     subject = []
     letter_from = []
     attachement = []
+    list_seen = []
     for i in list_unseen:
         status, data = imap.uid('fetch', i, '(RFC822)')
         msg = email.message_from_bytes(data[0][1])
-        try:
-            subject.append(decode_header(msg["Subject"])[0][0].decode())
-        except AttributeError:
-            subject.append(decode_header(msg["Subject"])[0][0])
-        except UnicodeDecodeError:
-            subject.append(decode_header(msg["Subject"])[0][0])
-        letter_from.append(msg['Return-path'])
         for part in msg.walk():
             if part.get_content_disposition() == 'attachment':
-                # data = base64.b64decode(img)
                 data = part.get_payload(decode=True)
-                out = open('img.jpg', 'wb')
+                name = part.get_filename()
+                out = open(('attachement/' + name), 'wb')
                 out.write(data)
                 out.close
-                attachement.append(part)
+                attachement.append('attachement/' + name)
+                try:
+                    subject.append(decode_header(
+                        msg["Subject"])[0][0].decode())
+                except AttributeError:
+                    subject.append(decode_header(msg["Subject"])[0][0])
+                except UnicodeDecodeError:
+                    subject.append(decode_header(msg["Subject"])[0][0])
+                letter_from.append(msg['Return-path'])
+                list_seen.append(i)
+    for non_att in list_unseen:
+        if non_att not in list_seen:
+            print(non_att)
+            imap.store(non_att, '-FLAGS', '\Seen')
 
     df = pandas.DataFrame(
-        {'subject': subject, 'letter_from': letter_from, 'attachement': attachement})
+        {'subject': subject, 'letter_from': letter_from, 'attachment': attachement})
+    print(list_seen)
     df.to_excel('./mails.xlsx')
     imap.logout()
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     mailgainer()
