@@ -14,6 +14,7 @@ PORT = os.getenv('PORT')
 
 
 def mailgainer():
+    if not os.path.exists('attachement'): os.makedirs('attachement') 
     imap = imaplib.IMAP4_SSL(SMTP_SERV)
     imap.login(LOGIN, PASSWORD)
     imap.select()
